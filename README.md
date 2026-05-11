@@ -10,7 +10,7 @@ API REST para cadastro e consulta de números de cartão, escrita em **Java 24 +
 |-------------------|------------------------------------------------------------------|
 | Linguagem         | Java 24                                                          |
 | Framework         | Spring Boot 3.5 (Web, Data JPA, Security, Validation, Actuator)  |
-| Banco             | PostgreSQL 16 (H2 nos testes)                                    |
+| Banco             | MySQL 8.4 (H2 nos testes)                                        |
 | Migrações         | Flyway                                                           |
 | Autenticação      | JWT (jjwt 0.12)                                                  |
 | Hash de cartão    | SHA-256 + pepper                                                 |
@@ -38,7 +38,7 @@ A primeira execução baixa as imagens, gera o certificado TLS e compila a API. 
 - **Healthcheck**: `https://localhost:8443/actuator/health`
 - Requisições HTTP em `http://localhost:8080` são **redirecionadas automaticamente** para HTTPS.
 
-> O certificado é autoassinado (gerado no build). Browsers e ferramentas exibirão aviso de segurança — use `-k` no curl ou aceite a exceção no browser. Em produção, substitua pelo certificado da sua CA (Let's Encrypt, etc.).
+> O certificado é autoassinado (gerado no build). Browsers e ferramentas exibirão aviso de segurança — use `-k` no curl ou aceite a exceção no browser. Em produção, substitua o certificado
 
 Para parar e limpar o volume do banco:
 
@@ -50,7 +50,7 @@ docker compose down -v
 
 | Variável                  | Default (dev)                                      | Observação                                  |
 |---------------------------|----------------------------------------------------|---------------------------------------------|
-| `DB_URL`                  | `jdbc:postgresql://postgres:5432/hyperativa`       |                                             |
+| `DB_URL`                  | `jdbc:mysql://mysql:3306/hyperativa`               |                                             |
 | `DB_USER` / `DB_PASSWORD` | `hyperativa` / `hyperativa`                        |                                             |
 | `JWT_SECRET`              | secret de dev (≥ 32 bytes)                         | **Apenas para ambiente de desenvolvimento** |
 | `JWT_EXPIRATION_MINUTES`  | `60`                                               |                                             |
@@ -63,11 +63,11 @@ docker compose down -v
 
 ## Como rodar localmente (sem Docker)
 
-Pré-requisitos: JDK 24, Maven 3.9+, Postgres 16 acessível.
+Pré-requisitos: JDK 24, Maven 3.9+, MySQL 8.x acessível.
 
 ```bash
-# subir só o Postgres via compose
-docker compose up -d postgres
+# subir só o MySQL via compose
+docker compose up -d mysql
 
 # gerar o keystore (necessário uma única vez)
 keytool -genkeypair -alias hyperativa -keyalg RSA -keysize 2048 \
@@ -106,7 +106,7 @@ Todo o tráfego é protegido por **TLS 1.2/1.3** com certificado RSA 2048-bit:
 
 ## Autenticação
 
-Há um usuário **seed** criado pela migration `V2`:
+Há um usuário **seed** criado automaticamente no startup pelo `DefaultUserSeeder` (se ainda não existir):
 
 | usuário | senha      | role  |
 |---------|------------|-------|
@@ -251,7 +251,7 @@ O número do cartão **nunca aparece nos logs** — apenas o UUID gerado pelo si
 | Transporte | TLS 1.2/1.3 (HTTPS), HTTP redireciona para HTTPS |
 | Autenticação | JWT assinado com HMAC-SHA512, stateless |
 | Armazenamento do cartão | SHA-256 + pepper (irreversível); número original nunca gravado |
-| Senha do usuário | BCrypt (gerada pelo pgcrypto do PostgreSQL) |
+| Senha do usuário | BCrypt (gerada pelo `BCryptPasswordEncoder` do Spring Security) |
 | Logs | Número do cartão nunca registrado; apenas UUID |
 
 ### Camadas (SOLID)

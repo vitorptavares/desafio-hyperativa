@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: hyperativa-db
+    environment:
+      MYSQL_DATABASE: hyperativa
+      MYSQL_USER: hyperativa
+      MYSQL_PASSWORD: hyperativa
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - hyperativa-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "hyperativa", "-phyperativa"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    container_name: hyperativa-api
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/hyperativa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DB_USER: hyperativa
+      DB_PASSWORD: hyperativa
+      JWT_SECRET: ${JWT_SECRET:-change-me-please-this-is-a-very-long-default-secret-only-for-dev-32bytes-min}
+      JWT_EXPIRATION_MINUTES: 60
+      CARD_HASH_PEPPER: ${CARD_HASH_PEPPER:-dev-only-pepper-replace-in-production}
+      SERVER_PORT: 8443
+      SSL_ENABLED: "true"
+      SSL_KEYSTORE_PASSWORD: ${SSL_KEYSTORE_PASSWORD:-hyperativa123}
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+
+volumes:
+  hyperativa-db-data:

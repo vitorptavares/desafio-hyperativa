@@ -1,0 +1,7 @@
+package com.hyperativa.desafio.exception;
+
+public class InvalidCardNumberException extends RuntimeException {
+    public InvalidCardNumberException(String message) {
+        super(message);
+    }
+}

@@ -1,0 +1,7 @@
+package com.hyperativa.desafio.exception;
+
+public class InvalidCredentialsException extends RuntimeException {
+    public InvalidCredentialsException() {
+        super("Credenciais invalidas");
+    }
+}
